@@ -1,0 +1,3 @@
+import initJaegerTracer from 'jaeger-client'; import opentracing from 'opentracing';
+export function initTracer(name='taskops-backend'){ const tracer=initJaegerTracer.initTracer({serviceName:name,sampler:{type:'const',param:1},reporter:{logSpans:true,agentHost:process.env.JAEGER_AGENT_HOST||'localhost',agentPort:Number(process.env.JAEGER_AGENT_PORT||6832)}},{}); opentracing.initGlobalTracer(tracer); return tracer; }
+export function tracingMiddleware(tracer){ return (req,res,next)=>{ const span=tracer.startSpan(`HTTP ${req.method} ${req.path}`); req.span=span; res.on('finish',()=>span.finish()); next(); }; }

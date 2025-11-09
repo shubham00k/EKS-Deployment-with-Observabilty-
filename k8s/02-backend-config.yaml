@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:  
+  name: backend-config
+  namespace: taskops
+data:
+  PORT: "4000"
+  DB_HOST: "postgres"
+  DB_PORT: "5432"
+  JAEGER_AGENT_HOST: "jaeger-agent.taskops.svc.cluster.local"
+  JAEGER_AGENT_PORT: "6832"
+  

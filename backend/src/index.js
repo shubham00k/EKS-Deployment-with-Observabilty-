@@ -1,0 +1,10 @@
+import express from 'express'; import cors from 'cors'; import morgan from 'morgan'; import dotenv from 'dotenv'; import pino from 'pino';
+import { initDb, db } from './db.js'; import { metricsEndpoint, timingMiddleware } from './metrics.js'; import { initTracer, tracingMiddleware } from './tracing.js';
+dotenv.config(); const logger=pino({transport:{target:'pino-pretty'}}); const app=express(); const tracer=initTracer();
+app.use(cors()); app.use(express.json()); app.use(morgan('combined')); app.use(tracingMiddleware(tracer)); app.use(timingMiddleware());
+app.get('/healthz',(req,res)=>res.json({ok:true})); app.get('/metrics',metricsEndpoint());
+app.get('/api/tasks', async (req,res)=>{ try{ res.json(await db.all()); }catch(e){ req.span?.log({event:'error',message:e.message}); res.status(500).json({error:'db_failed'});} });
+app.post('/api/tasks', async (req,res)=>{ try{ const {title}=req.body; if(!title) return res.status(400).json({error:'title_required'}); res.status(201).json(await db.create(title)); }catch(e){ req.span?.log({event:'error',message:e.message}); res.status(500).json({error:'db_failed'});} });
+app.patch('/api/tasks/:id', async (req,res)=>{ try{ const id=Number(req.params.id); const allowed=['title','status']; const f={}; for(const k of allowed) if(k in req.body) f[k]=req.body[k]; const u=await db.update(id,f); if(!u) return res.status(404).json({error:'not_found'}); res.json(u);}catch(e){ req.span?.log({event:'error',message:e.message}); res.status(500).json({error:'db_failed'});} });
+app.delete('/api/tasks/:id', async (req,res)=>{ try{ await db.remove(Number(req.params.id)); res.status(204).send(); }catch(e){ res.status(500).json({error:'db_failed'});} });
+const port=process.env.PORT||4000; const server=app.listen(port, async ()=>{ await initDb(); logger.info(`taskops backend listening on ${port}`);}); process.on('SIGTERM',()=>server.close(()=>process.exit(0)));

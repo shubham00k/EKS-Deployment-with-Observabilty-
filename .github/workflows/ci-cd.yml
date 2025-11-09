@@ -1,0 +1,76 @@
+name: ci-cd
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Backend Image
+        run: |
+          docker build -t ghcr.io/${{ github.repository }}/taskops-backend:${{ github.sha }} ./backend
+          docker push ghcr.io/${{ github.repository }}/taskops-backend:${{ github.sha }}
+
+      - name: Build and Push Frontend Image
+        run: |
+          docker build -t ghcr.io/${{ github.repository }}/taskops-frontend:${{ github.sha }} ./frontend
+          docker push ghcr.io/${{ github.repository }}/taskops-frontend:${{ github.sha }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.30.0'
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Update kubeconfig for EKS
+        run: aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER }} --region ${{ secrets.AWS_REGION }}
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install taskops ./helm/taskops \
+            --namespace taskops \
+            --create-namespace \
+            --set image.backend=ghcr.io/${{ github.repository }}/taskops-backend:${{ github.sha }} \
+            --set image.frontend=ghcr.io/${{ github.repository }}/taskops-frontend:${{ github.sha }} \
+            --set ingress.host=${{ secrets.INGRESS_HOST }}

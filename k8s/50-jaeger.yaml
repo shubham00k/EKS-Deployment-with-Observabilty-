@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Service
+metadata: { name: jaeger-ui, namespace: taskops }
+spec: { type: ClusterIP, ports: [ { name: ui, port: 16686, targetPort: 16686 } ], selector: { app: jaeger } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: jaeger-agent, namespace: taskops }
+spec:
+  clusterIP: None
+  ports:
+    - { name: agent-udp1, port: 6831, targetPort: 6831, protocol: UDP }
+    - { name: agent-udp2, port: 6832, targetPort: 6832, protocol: UDP }
+  selector: { app: jaeger }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: jaeger, namespace: taskops }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: jaeger } }
+  template:
+    metadata: { labels: { app: jaeger } }
+    spec:
+      containers:
+        - name: jaeger
+          image: jaegertracing/all-in-one:1.57
+          ports:
+            - { containerPort: 16686 }
+            - { containerPort: 6831, protocol: UDP }
+            - { containerPort: 6832, protocol: UDP }
