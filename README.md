@@ -4,6 +4,7 @@ A detailed, end‑to‑end walkthrough of how to set up, run, and deploy the **T
 
 ## ⚙️ TaskOps Architecture
 
+
 <p align="center">
   <img src="./taskops-architecture.png" alt="TaskOps Architecture" width="800"/>
 </p>
