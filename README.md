@@ -4,28 +4,9 @@ A detailed, end‑to‑end walkthrough of how to set up, run, and deploy the **T
 
 ## ⚙️ TaskOps Architecture
 
-```mermaid
-flowchart TD
-  subgraph Client
-    FE[Frontend - React/Nginx]
-  end
-
-  subgraph Cluster[EKS Cluster]
-    BE[Backend - Node.js API]
-    DB[(Postgres - StatefulSet)]
-    J[Jaeger - Tracing]
-    P[Prometheus]
-    G[Grafana]
-    L[EFK Stack]
-  end
-
-  FE -->|HTTP| BE
-  BE -->|SQL| DB
-  BE --> J
-  BE --> P
-  BE --> L
-  P --> G
-  L --> G
+<p align="center">
+  <img src="/taskops-architecture.png" alt="TaskOps Architecture" width="800"/>
+</p>
 
 ---
 
