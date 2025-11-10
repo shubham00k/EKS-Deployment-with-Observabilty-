@@ -32,13 +32,13 @@ jobs:
 
       - name: Build and Push Backend Image
         run: |
-          docker build -t ghcr.io/${{ github.repository }}/taskops-backend:${{ github.sha }} ./backend
-          docker push ghcr.io/${{ github.repository }}/taskops-backend:${{ github.sha }}
+          docker build -t shubhamkapse003/taskops-backend:latest ./backend
+          docker push shubhamkapse003/taskops-backend:latest
 
       - name: Build and Push Frontend Image
         run: |
-          docker build -t ghcr.io/${{ github.repository }}/taskops-frontend:${{ github.sha }} ./frontend
-          docker push ghcr.io/${{ github.repository }}/taskops-frontend:${{ github.sha }}
+          docker build -t shubhamkapse003/taskops-frontend:latest ./frontend
+          docker push shubhamkapse003/taskops-backend:latest
 
   deploy:
     needs: build-and-push
