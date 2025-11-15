@@ -39,7 +39,7 @@ A detailed, end‑to‑end walkthrough of how to set up, run, and deploy the **T
 * AWS CLI (configured with IAM credentials)
 * eksctl
 * kubectl
-* AWS EBS CSI Driver addon (we’ll install it)
+* AWS EBS CSI Driver addon 
 
 ---
 
